@@ -6,41 +6,58 @@ part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc() : super(AuthInitial()) {
-    on<AuthLoginRequested>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        //from AuthLoginRequested event
-        final email = event.email;
-        final password = event.password;
-        // validation & Sanitilation
-        if (!email.contains("@")) {
-          return emit(AuthFailure("The email is invalid"));
-        }
-        if (password.length < 6) {
-          return emit(
-            AuthFailure(
-              "The password length can not be shorter than 6 characters.",
-            ),
-          );
-        }
-        // mock successful
-        await Future.delayed(const Duration(seconds: 1), () {
-          return emit(AuthSuccess(uid: "$email-$password"));
-        });
-      } catch (e) {
-        return emit(AuthFailure(e.toString()));
-      }
-    });
+    on<AuthLoginRequested>(_onAuthLoginRequested);
+    on<AuthLogoutRequested>(_onAuthLogoutRequest);
+  }
+  @override
+  void onChange(Change<AuthState> change) {
+    super.onChange(change);
+    print("AuthBloc - $change");
+  }
 
-    on<AuthLogoutRequested>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        await Future.delayed(const Duration(seconds: 1), () {
-          return emit(AuthInitial());
-        });
-      } catch (e) {
-        return emit(AuthFailure(e.toString()));
+  @override
+  void onError(Object error, StackTrace stackTrace) {
+    super.onError(error, stackTrace);
+    print("AuthBloc - $error");
+  }
+
+  void _onAuthLoginRequested(AuthLoginRequested event, Emitter emit) async {
+    emit(AuthLoading());
+    try {
+      //from AuthLoginRequested event
+      final email = event.email;
+      final password = event.password;
+
+      // validation & Sanitilation
+      if (!email.contains("@")) {
+        return emit(AuthFailure("The email is invalid"));
       }
-    });
+      if (password.length < 6) {
+        return emit(
+          AuthFailure(
+            "The password length can not be shorter than 6 characters.",
+          ),
+        );
+      }
+
+      // mock successful
+      await Future.delayed(const Duration(seconds: 1), () {
+        return emit(AuthSuccess(uid: "$email-$password"));
+      });
+    } catch (e) {
+      return emit(AuthFailure(e.toString()));
+    }
+  }
+
+  void _onAuthLogoutRequest(AuthLogoutRequested event, Emitter emit) async {
+    emit(AuthLoading());
+    try {
+      // mock successful
+      await Future.delayed(const Duration(seconds: 1), () {
+        return emit(AuthInitial());
+      });
+    } catch (e) {
+      return emit(AuthFailure(e.toString()));
+    }
   }
 }
